@@ -1,17 +1,28 @@
 #!/usr/bin/python3
 """
-lists all cities of that state, using the database hbtn_0e_4_usa
+    file: 5-filter_cities.py
 """
-import sys
-import MySQLdb
-
 if __name__ == "__main__":
-    db = MySQLdb.connect(user=sys.argv[1], passwd=sys.argv[2], db=sys.argv[3])
-    c = db.cursor()
-    c.execute("""SELECT * FROM cities
-                INNER JOIN states
-                ON cities.state_id = states.id
-                ORDER BY cities.id""")
-    print(", ".join([city[2]
-                     for city in c.fetchall()
-                     if city[4] == sys.argv[4]]))
+    from sys import argv
+    import MySQLdb
+
+    db = MySQLdb.connect(host="localhost", port=3306,
+                         user=argv[1], passwd=argv[2], db=argv[3])
+    cur = db.cursor()
+    st = argv[4]
+    cur.execute("SELECT cities.name FROM cities \
+WHERE cities.state_id in ( \
+SELECT states.id FROM states WHERE states.name=%s) \
+ORDER BY cities.id ASC", (st,))
+    rows = cur.fetchall()
+    i = 0
+    for row in rows:
+        if (i != 0):
+            print(", ", sep="", end="")
+        else:
+            i = 1
+        for col in row:
+            print("{}".format(col), sep="", end="")
+    print()
+    cur.close()
+    db.close()
